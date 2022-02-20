@@ -17,82 +17,73 @@ namespace Teodoro_CSC469_CannyEdgeDetection
             InitializeComponent();
         }
         
-        public Color applyMask(Bitmap original, int[][] smoothingMask, int x, int y)
+        public Color applyMask(Bitmap original, int[,] smoothingMask, int x, int y)
         {
-            try
+            
+            Color yComponent = original.GetPixel(x, y);
+            x -= 2;
+            int tempx = x;
+            y -= 2;
+            int gaussianBlurR = 0;
+            int gaussianBlurG = 0;
+            int gaussianBlurB = 0;
+            Color colorBlur;
+            for(int i = 0; i < 5; i++)
             {
-                int matrixTot = 0;
-                Color yComponent.Value = 0;
-                x -= 2;
-                y -= 2;
-                for(int i = 0; i < smoothingMask.Length; i++)
+                for (int j = 0; j < 5; j++)
                 {
-                    for (int j = 0; j < smoothingMask.Length; j++)
-                    {
-                        yComponent.Value += original.GetPixel(x, y) * smoothingMask[i][j];
-                    }
+                    yComponent = original.GetPixel(x, y);
+                    gaussianBlurR += (int)(yComponent.R * smoothingMask[i, j]);
+                    gaussianBlurG += (int)(yComponent.G * smoothingMask[i, j]);
+                    gaussianBlurB += (int)(yComponent.B * smoothingMask[i, j]);
+                    x++;
                 }
-                return yComponent;
+                x = tempx;
+                y++;
             }
-            catch
-            { 
-                throw new NotImplementedException();
-            }
+            gaussianBlurR += 136;
+            gaussianBlurG += 136;
+            gaussianBlurB += 136;
+            gaussianBlurR /= 273;
+            gaussianBlurG /= 273;
+            gaussianBlurB /= 273;
+            colorBlur = Color.FromArgb(gaussianBlurR, gaussianBlurG, gaussianBlurB);
+            //yComponent.FromArgb(matrixTot);
+            return colorBlur;
+            
         }
 
         public Bitmap calcSmoothing(Bitmap original)
         {
-            try
-            {
-                //Declarations
-                Color yComponent;
-                int[,] smoothingMatrix = new int[5, 5] { { 1, 4, 7, 4, 1}, { 4, 16, 26, 16, 4 }, { 7, 26, 41, 26, 7},
-                                                    {4, 16, 26, 16, 4}, {1, 4, 7, 4, 1 } };
-                for (int i = 0; i < 5; i++)
-                {
-                    for (int j = 0; j < 5; j++)
-                    {
-                        System.Console.WriteLine(smoothingMatrix[i, j]);
-                    }
-                    System.Console.WriteLine();
-                }
 
-                //Compute Smoothing
-                Bitmap smoothingBitmap = new Bitmap(original.Width, original.Height);
-                for(int i = 0; i < original.Width; i++)
-                {
-                    for(int j = 0; j < original.Height; j++)
-                    {   
-                        //Finds yComponent
-                        //  Edge Cases: copy edges
-                        //if(i < 2 || j  < 2 || i > original.Width || j > original.Height)
-                        //{
-                        //    for(int m = 0; m < 5; m++)
-                        //    {
-                        //        for(int n = 0; n < 5; n++)
-                        //        {
-                        //            Color originalColor = original.GetPixel(i, j); 
-                        //        }
-                        //    }
-                        //}
-                        yComponent = original.GetPixel(i, j);
-                        //Compute math
-                        for(int m = 0; m < 5; m++)
-                        {
-                            for(int n = 0; n < 5; n++)
-                            {
-                                
-                            }
-                        }
-                    }
-                }
+            //Declarations
+            //Color yComponent;
+            Color yComponent;
+            int[,] smoothingMatrix = new int[5, 5] { { 1, 4, 7, 4, 1}, { 4, 16, 26, 16, 4 }, { 7, 26, 41, 26, 7},
+                                                {4, 16, 26, 16, 4}, {1, 4, 7, 4, 1 } };
+            //for (int i = 0; i < 5; i++)
+            //{
+            //    for (int j = 0; j < 5; j++)
+            //    {
+            //        System.Console.WriteLine(smoothingMatrix[i, j]);
+            //    }
+            //    System.Console.WriteLine();
+            //}
 
-                return original;
-            }
-            catch
+            //Compute Smoothing
+            Bitmap smoothingBitmap = new Bitmap(original.Width, original.Height);
+            for(int i = 5; i < (original.Width - 5); i++)
             {
-                throw new NotImplementedException();
+                for(int j = 5; j < (original.Height - 5); j++)
+                {
+                    yComponent = applyMask(original, smoothingMatrix, i, j);
+                    smoothingBitmap.SetPixel(i, j, yComponent);
+                }
             }
+
+            return smoothingBitmap;
+            
+            
         }
 
         //public Bitmap calcGradients(Bitmap original)
