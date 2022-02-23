@@ -11,6 +11,24 @@ namespace Teodoro_CSC469_CannyEdgeDetection
             InitializeComponent();
         }
 
+        public Bitmap grayScale(Bitmap original)
+        {
+            Bitmap newBitmap = new Bitmap(original.Width, original.Height);
+            for (int i = 0; i < original.Width; i++)
+            {
+                for (int j = 0; j < original.Height; j++)
+                {
+                    //get the pixels from the original image
+                    Color originalColor = original.GetPixel(i, j);
+                    //create the gray scale version of each pixel
+                    int grayScale = (int)((originalColor.R * 0.3) + (originalColor.G * 0.59) + (originalColor.B * 0.11));
+                    Color newColor = Color.FromArgb(grayScale, grayScale, grayScale);
+                    newBitmap.SetPixel(i, j, newColor);
+                }
+            }
+            return newBitmap;
+        }
+
         public Color applyMask(Bitmap original, int[,] smoothingMask, int x, int y, bool isEdge)
         {
 
@@ -145,12 +163,20 @@ namespace Teodoro_CSC469_CannyEdgeDetection
 
         public void calcGradients(Bitmap original, float[,] gradient, float[,] gradientX, float[,] gradientY)
         {
+            Color pixelbackrow;
+            Color pixelbackcol;
+            Color pixelfrontrow;
+            Color pixelfrontcol;
             for(int i = 1; i < original.Width-3; i++)
             {
                 for( int j = 1; j < original.Height-3; j++)
                 {
-                    gradientX[i, j] = (float)((original.GetPixel(i - 1, j)).A - (original.GetPixel(i + 1, j)).A) / 2;
-                    gradientY[i, j] = (float)((original.GetPixel(i, j - 1)).A - (original.GetPixel(i, j + 1)).A) / 2;
+                    pixelbackrow = original.GetPixel(i-1, j);
+                    pixelbackcol = original.GetPixel(i, j-1);
+                    pixelfrontrow = original.GetPixel(i+1, j);
+                    pixelfrontcol = original.GetPixel(i, j+1);
+                    gradientX[i, j] = (float)(((pixelfrontrow.R + pixelfrontrow.G + pixelfrontrow.B) / 3) - ((pixelbackrow.R + pixelfrontrow.G + pixelfrontrow.B) / 3) / 2);
+                    gradientY[i, j] = (float)(((pixelfrontcol.R + pixelfrontrow.G + pixelfrontrow.B) / 3) - ((pixelbackcol.R + pixelfrontrow.G + pixelfrontrow.B) / 3) / 2);
                     gradient[i, j] = gradientX[i, j] + gradientY[i, j];
                 }
             }
@@ -171,20 +197,20 @@ namespace Teodoro_CSC469_CannyEdgeDetection
                     temp = new decimal(gradientY[i, j]);
                     tempY = (double)temp;
 
-                    //Convert to Dec
-                    currAngle = (float)(Math.Atan2(tempY, tempX) / PI) * 180; //Convert to Dec
+                    //Convert to Deg
+                    currAngle = (float)(Math.Atan2(tempY, tempX) / PI) * 180; //Convert to Deg
 
                     //Determine Non-maximal Suppression
-                    if ((currAngle < 22.5 && currAngle > -22.5) || (currAngle > 157.5) || currAngle < -157.5 )
+                    if ((currAngle <= 22.5 && currAngle > -22.5) || (currAngle >= 157.5) || currAngle < -157.5 )
                     {
                         edgeDirection[i, j] = 0;
-                    }else if ((currAngle > 22.5 && currAngle < 67.5) || (currAngle < -112.5) || currAngle > -157.5 )
+                    }else if ((currAngle >= 22.5 && currAngle < 67.5) || (currAngle <= -112.5) || currAngle > -157.5 )
                     {
                         edgeDirection[i, j] = 45;
-                    }else if ((currAngle > 67.5 && currAngle < 112.5) || (currAngle < -67.5) || currAngle > -112.5 )
+                    }else if ((currAngle >= 67.5 && currAngle < 112.5) || (currAngle <= -67.5) || currAngle > -112.5 )
                     {
                         edgeDirection[i, j] = 90;
-                    }else if ((currAngle > 112.5 && currAngle < 157.5) || (currAngle < -22.5) || currAngle > -67.5 )
+                    }else if ((currAngle >= 112.5 && currAngle < 157.5) || (currAngle <= -22.5) || currAngle > -67.5 )
                     {
                         edgeDirection[i, j] = 135;
                     }
@@ -196,8 +222,7 @@ namespace Teodoro_CSC469_CannyEdgeDetection
         {
             bool isEdgeEnd = false;
             Bitmap newBitmap = new Bitmap(original.Width, original.Height);
-            Color background = new Color();
-            background = Color.FromArgb(0,0,0,0);
+            Color background = Color.Black;
             for(int i = 1; i < original.Width-2; i++)
             {
                 for(int j = 1; j < original.Height-2; j++)
@@ -208,16 +233,16 @@ namespace Teodoro_CSC469_CannyEdgeDetection
                         switch(pixelAngle[i,j])
                         {
                             case 0:
-                                newBitmap = findEdge(original, newBitmap, 0, 1, i, j, 0, lowerThreshold);
+                                newBitmap = findEdge(original, newBitmap, pixelAngle, gradient, 0, 1, i, j, 0, lowerThreshold);
                                 break;
                             case 45:
-                                newBitmap = findEdge(original, newBitmap, 1, 1, i, j, 45, lowerThreshold);
+                                newBitmap = findEdge(original, newBitmap, pixelAngle, gradient, 1, 1, i, j, 45, lowerThreshold);
                                 break;
                             case 90:
-                                newBitmap = findEdge(original, newBitmap, 1, 0, i, j, 90, lowerThreshold);
+                                newBitmap = findEdge(original, newBitmap, pixelAngle, gradient, 1, 0, i, j, 90, lowerThreshold);
                                 break;
                             case 135:
-                                newBitmap = findEdge(original, newBitmap, 1, -1, i, j, 135, lowerThreshold);
+                                newBitmap = findEdge(original, newBitmap, pixelAngle, gradient, 1, -1, i, j, 135, lowerThreshold);
                                 break;
                             default:
                                 //make black
@@ -234,9 +259,95 @@ namespace Teodoro_CSC469_CannyEdgeDetection
             return newBitmap;
         }
 
-        private Bitmap findEdge(Bitmap original, Bitmap newBitmap, int rowShift, int colShift, int row, int col, int dir, int lowerThreshold)
+        private Bitmap findEdge(Bitmap original, Bitmap newBitmap, float[,] edgeDir, float[,] gradients, int rowShift, int colShift, int row, int col, int dir, int lowerThreshold)
         {
+            int newRow = 0, newCol = 0;
+            bool edgeEnd = false;
+            Color foreground = Color.White;
+            //Find the end of the edge
+            if (colShift < 0)
+            {
+                if (col > 0)
+                {
+                    newCol = col + colShift;
+                }
+                else
+                {
+                    edgeEnd = true;
+                }
+            } 
+            else if (col < original.Width - 1)
+            {
+                newCol = col + colShift;
+            } 
+            else
+            {
+                edgeEnd = true;
+            }
 
+            if(rowShift < 0) 
+            {
+                if (row > 0)
+                {
+                    newRow = row + rowShift;
+                }
+                else
+                {
+                    edgeEnd = true;
+                }
+            } else if (row < original.Height - 1)
+            {
+                newRow = row + rowShift;
+            } else
+            {
+                edgeEnd = true;
+            }
+
+            while ( (edgeDir[newRow, newCol] == dir) && !edgeEnd && (gradients[newRow, newCol] > lowerThreshold))
+            {
+                newBitmap.SetPixel(newRow, newCol, foreground);
+                if (colShift < 0)
+                {
+                    if (col > 0)
+                    {
+                        newCol = col + colShift;
+                    }
+                    else
+                    {
+                        edgeEnd = true;
+                    }
+                }
+                else if (col < original.Width - 1)
+                {
+                    newCol = col + colShift;
+                }
+                else
+                {
+                    edgeEnd = true;
+                }
+
+                if (rowShift < 0)
+                {
+                    if (row > 0)
+                    {
+                        newRow = row + rowShift;
+                    }
+                    else
+                    {
+                        edgeEnd = true;
+                    }
+                }
+                else if (row < original.Height - 1)
+                {
+                    newRow = row + rowShift;
+                }
+                else
+                {
+                    edgeEnd = true;
+                }
+
+            }
+            
             return newBitmap;
         }
         //
@@ -261,8 +372,11 @@ namespace Teodoro_CSC469_CannyEdgeDetection
             //Perform Canny Edge Detection
             Bitmap original = (Bitmap)pictureBox1.Image;
 
+            //GrayScale 
+            Bitmap newImage = grayScale(original);
+
             //Smoothing
-            Bitmap newImage = calcSmoothing(original);
+            newImage = calcSmoothing(newImage);
 
             //Find Gradient
             float[,] gradient = new float[newImage.Width, newImage.Height];
@@ -275,7 +389,8 @@ namespace Teodoro_CSC469_CannyEdgeDetection
             calcNonMaximalSuppression(newImage, gradientX, gradientY, pixelAngle);
            
             //Draw Bitmap
-            int upperThreshold, lowerThreshold;
+            int upperThreshold = 60, lowerThreshold = 30;
+            newImage = drawBitmap(newImage, pixelAngle, gradient, upperThreshold, lowerThreshold);
  
 
             //Thresholding Hysterias
