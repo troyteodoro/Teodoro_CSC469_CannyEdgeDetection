@@ -317,9 +317,9 @@ namespace Teodoro_CSC469_CannyEdgeDetection
                         edgeEnd = true;
                     }
                 }
-                else if (col < original.Width - 1)
+                else if (newCol < original.Width - 1)
                 {
-                    newCol = col + colShift;
+                    newCol = newCol + colShift;
                 }
                 else
                 {
@@ -328,18 +328,18 @@ namespace Teodoro_CSC469_CannyEdgeDetection
 
                 if (rowShift < 0)
                 {
-                    if (row > 0)
+                    if (newRow > 0)
                     {
-                        newRow = row + rowShift;
+                        newRow = newRow + rowShift;
                     }
                     else
                     {
                         edgeEnd = true;
                     }
                 }
-                else if (row < original.Height - 1)
+                else if (newRow < original.Height - 1)
                 {
-                    newRow = row + rowShift;
+                    newRow = newRow + rowShift;
                 }
                 else
                 {
@@ -389,7 +389,8 @@ namespace Teodoro_CSC469_CannyEdgeDetection
             calcNonMaximalSuppression(newImage, gradientX, gradientY, pixelAngle);
            
             //Draw Bitmap
-            int upperThreshold = 60, lowerThreshold = 30;
+            int upperThreshold = 150, lowerThreshold = 60;
+
             newImage = drawBitmap(newImage, pixelAngle, gradient, upperThreshold, lowerThreshold);
  
 
